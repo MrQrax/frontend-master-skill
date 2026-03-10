@@ -9,7 +9,7 @@ This skill embodies a world-class frontend design architect with 50 years of com
 
 ## Multi-Agent Architecture
 
-This skill uses **4 specialized agents** that run in parallel to maximize speed. The main conversation orchestrates them — it NEVER does research or QA itself.
+This skill uses **6 specialized agents** that run in parallel to maximize speed. The main conversation orchestrates them — it NEVER does research, QA, or screenshots itself.
 
 ### Agent Roster
 
@@ -18,9 +18,11 @@ This skill uses **4 specialized agents** that run in parallel to maximize speed.
 | `design-researcher` | sonnet | Web research — trends, patterns, inspiration | ~15s |
 | `docs-fetcher` | haiku | Library documentation via Context7 MCP | ~5s |
 | `codebase-analyzer` | haiku | Analyzes existing design system & components | ~5s |
-| `design-qa` | sonnet | Post-implementation quality assurance | ~10s |
+| `design-qa` | sonnet | Post-implementation code quality assurance | ~10s |
+| `device-screenshotter` | haiku | ADB screenshot + optional build/install pipeline | ~30-90s |
+| `visual-reviewer` | sonnet | Multimodal visual analysis of device screenshots | ~10s |
 
-## Mandatory Workflow — 4 Phases
+## Mandatory Workflow — 5 Phases (with Device Feedback Loop)
 
 ### Phase 1: Parallel Research Sprint (3 agents simultaneously)
 
@@ -97,7 +99,44 @@ After implementation, launch the QA agent:
 **Agent: `design-qa`** (foreground — wait for results)
 - Prompt: `"Audit the design in [PROJECT_PATH]. Check files: [list of modified files]. Verify: safe areas, touch targets ≥44px, text readability, scroll management, image fallbacks, animation performance, loading/empty states, consistency with design tokens."`
 
-Fix any failures reported by the QA agent before presenting the result to the user.
+Fix any failures reported by the QA agent before proceeding to device verification.
+
+### Phase 5: Device Verification Loop (screenshot feedback)
+
+This phase creates a **visual feedback loop** — build, install, screenshot, review, fix, repeat until perfect.
+
+#### Step 5a: Build-Install-Screenshot
+
+Launch the **device-screenshotter agent** (foreground — must wait for screenshot):
+- Prompt: `"Build and install the Capacitor app, then take a screenshot. Pipeline: 1) cd [PROJECT_PATH] && npm run build, 2) npx cap sync android, 3) cd android && ./gradlew assembleDebug, 4) adb install -r [APK_PATH], 5) adb shell pm clear [PACKAGE_NAME], 6) adb shell am start -n [PACKAGE_NAME]/.MainActivity, 7) sleep 3, 8) Take screenshot with: mkdir -p /tmp/design-screenshots && adb exec-out screencap -p > /tmp/design-screenshots/screen_$(date +%Y%m%d_%H%M%S).png. Return the screenshot file path."`
+
+#### Step 5b: Visual Review
+
+Once the screenshot is saved, **the main conversation reads the image directly** using the Read tool (which supports multimodal image viewing). Then launch the **visual-reviewer agent** in parallel for detailed analysis:
+
+1. **Main conversation**: `Read` the screenshot file → quick visual check
+2. **Agent: `visual-reviewer`** (foreground): `"Review this screenshot: [PATH]. Check: status bar overlap, nav bar overlap, layout balance, typography readability, color consistency, spacing, touch target visibility, overall visual quality. Score each category 1-10 and list specific issues with fix suggestions."`
+
+#### Step 5c: Fix-and-Iterate Loop
+
+If the visual review finds issues:
+1. Fix the code based on the review report
+2. **Repeat Phase 5a-5b** (rebuild, reinstall, screenshot, review)
+3. Continue until visual review passes with score ≥ 8/10 in all categories
+
+Maximum **3 iterations** to avoid infinite loops. If issues persist after 3 rounds, present the current state and remaining issues to the user for guidance.
+
+#### Screenshot Management
+- All screenshots saved to `/tmp/design-screenshots/`
+- Filenames include timestamp: `screen_YYYYMMDD_HHMMSS.png`
+- Previous screenshots are kept for comparison (before/after)
+- Use `adb exec-out screencap -p > file.png` (fast, no device storage needed)
+
+#### ADB Connection Notes
+- Device is typically connected via wireless ADB (Tailscale IP)
+- Check connection with `adb devices` before any operation
+- If disconnected, reconnect with `adb connect [IP]:[PORT]`
+- Common address pattern: `100.123.137.88:[PORT]` (port changes between sessions)
 
 ## Additional Resources
 
@@ -109,7 +148,9 @@ Fix any failures reported by the QA agent before presenting the result to the us
 - **`agents/design-researcher.md`** — Web research for trends, patterns, inspiration
 - **`agents/docs-fetcher.md`** — Context7 MCP documentation fetching
 - **`agents/codebase-analyzer.md`** — Existing design system analysis
-- **`agents/design-qa.md`** — Post-implementation quality assurance
+- **`agents/design-qa.md`** — Post-implementation code quality assurance
+- **`agents/device-screenshotter.md`** — ADB screenshot + build/install pipeline
+- **`agents/visual-reviewer.md`** — Multimodal visual analysis of device screenshots
 
 ## Anti-Patterns — NEVER Do These
 
