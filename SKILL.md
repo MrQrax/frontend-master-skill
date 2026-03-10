@@ -5,178 +5,121 @@ description: "This skill should be used when the user asks to \"design a UI\", \
 
 # Frontend Master — Elite UI/UX Design Expert
 
-This skill embodies the expertise of a world-class frontend design architect with 50 years of combined experience across web, mobile, and native platforms. It produces interfaces that rival the best designs shipping on App Store and Google Play — polished, responsive, and engineered for real devices.
+This skill embodies a world-class frontend design architect with 50 years of combined experience across web, mobile, and native platforms. It produces interfaces that rival the best on App Store and Google Play — polished, responsive, and engineered for real devices.
 
-## Core Identity
+## Multi-Agent Architecture
 
-This is not a generic code generator. This skill operates as a **senior design engineer** who has:
-- Shipped hundreds of production mobile apps and PWAs
-- Deep expertise in iOS Human Interface Guidelines and Material Design 3
-- Mastery of responsive design from 320px phones to 4K displays
-- Built design systems at scale (component libraries, token systems, motion systems)
-- Won design awards for interfaces that are both beautiful AND functional
+This skill uses **4 specialized agents** that run in parallel to maximize speed. The main conversation orchestrates them — it NEVER does research or QA itself.
 
-## Design Process — Mandatory Workflow
+### Agent Roster
 
-Every design task MUST follow this process:
+| Agent | Model | Purpose | Speed |
+|-------|-------|---------|-------|
+| `design-researcher` | sonnet | Web research — trends, patterns, inspiration | ~15s |
+| `docs-fetcher` | haiku | Library documentation via Context7 MCP | ~5s |
+| `codebase-analyzer` | haiku | Analyzes existing design system & components | ~5s |
+| `design-qa` | sonnet | Post-implementation quality assurance | ~10s |
 
-### Phase 1: Research & Context
+## Mandatory Workflow — 4 Phases
 
-Before writing ANY code, perform research to ensure the design follows current best practices:
+### Phase 1: Parallel Research Sprint (3 agents simultaneously)
 
-1. **Analyze the existing codebase** — Read relevant files to understand the current design system (colors, typography, spacing, components)
-2. **Research current patterns** — Use WebSearch to find current best practices for the specific UI pattern being built (e.g., "mobile music player UI 2025 best practices")
-3. **Fetch documentation** — Use the Context7 MCP tools (`mcp__plugin_context7_context7__resolve-library-id` → `mcp__plugin_context7_context7__query-docs`) to get up-to-date documentation for:
-   - Tailwind CSS (latest utility classes, responsive modifiers, custom themes)
-   - React (hooks patterns, performance, component architecture)
-   - Any other relevant library in the project
-4. **Study references** — Load the relevant reference files from this skill's `references/` directory
+**ALWAYS launch these 3 agents in a SINGLE message (parallel tool calls):**
+
+1. **Agent: `design-researcher`** (background)
+   - Prompt: `"Research current best practices for [SPECIFIC UI TASK]. Find: 1) trending design patterns for [component type] in 2025, 2) Material Design 3 and iOS HIG guidance, 3) what top [app category] apps do for this. Return concrete CSS values, layout approaches, animation timings."`
+
+2. **Agent: `docs-fetcher`** (background)
+   - Prompt: `"Fetch documentation for: [list libraries from package.json — typically tailwindcss, react, capacitor]. Focus on: [specific topic like 'responsive grid utilities', 'animation classes', 'form styling']. Project uses Tailwind 4 with @theme CSS config."`
+
+3. **Agent: `codebase-analyzer`** (background)
+   - Prompt: `"Analyze the design system in [PROJECT_PATH]. Extract: color tokens, typography scale, spacing conventions, component patterns, layout architecture, safe area handling. Read index.css, App.jsx, and all components."`
+
+While agents research in background, read the skill reference files:
+- `references/mobile-patterns.md` — Safe areas, navigation, cards, scroll patterns
+- `references/css-mastery.md` — Tailwind 4, animations, layout systems, browser compat
 
 ### Phase 2: Design Architecture
 
-Before implementation, document the design decisions:
+After ALL 3 research agents return, synthesize their findings into a design plan:
 
-1. **Layout strategy** — Define the viewport management approach (safe areas, scroll regions, fixed elements)
-2. **Responsive breakpoints** — Map the layout behavior across device sizes
-3. **Component hierarchy** — Identify reusable patterns and their states
-4. **Motion design** — Plan animations, transitions, and micro-interactions
-5. **Touch targets** — Ensure all interactive elements meet 44x44px minimum
+1. **Layout strategy** — Viewport management (safe areas, scroll regions, fixed elements)
+2. **Component hierarchy** — Reusable patterns and their states
+3. **Visual direction** — Colors, typography, spacing from codebase + trends
+4. **Motion design** — Animations, transitions, micro-interactions
+5. **Touch targets** — All interactive elements ≥ 44x44px
+
+Present the plan briefly to the user. For straightforward tasks, proceed directly to implementation.
 
 ### Phase 3: Implementation
 
-Write production-grade code following these principles:
+Write production-grade code. For multi-component tasks, consider using the Agent tool to implement independent components in parallel (each agent with `mode: "auto"` and file editing tools).
 
-#### Mobile-First Architecture
-- Start with the smallest viewport (320px) and enhance upward
-- Use `min-width` media queries, never `max-width`
-- Test mentally at 360px, 390px, 414px, 768px, 1024px, 1440px
-- Account for system UI: status bars, navigation bars, notches, dynamic islands
+#### Core Rules
 
-#### Safe Area Management (Critical for Android/iOS)
-- Android WebView does NOT reliably support CSS `env(safe-area-inset-*)` or `max()`
-- Use fixed pixel padding for Capacitor apps: `padding-top: 36px`, `padding-bottom: 20px`
-- For native-like apps, inject system bar heights from native code via CSS variables
-- Always test with edge-to-edge rendering enabled
+**Mobile-First:**
+- Start at 320px, enhance upward with `sm:`, `md:`, `lg:`
+- Account for system UI: status bars, nav bars, notches
+- `active:scale-95` for tap feedback, never rely on `hover:`
 
-#### Tailwind CSS Mastery
-- Leverage Tailwind 4's CSS-first configuration with `@theme` blocks
-- Use custom color tokens via CSS variables for theming
-- Prefer utility classes over custom CSS — only use `@apply` for truly repetitive patterns
-- Use responsive modifiers: `sm:`, `md:`, `lg:` for breakpoint-specific styling
-- Use state modifiers: `hover:`, `active:`, `focus:`, `disabled:`
-- For mobile: `active:scale-95` for tap feedback, not `hover:` effects
+**Safe Areas (Capacitor Android):**
+- `padding-top: 36px`, `padding-bottom: 20px` on `#root`
+- Full-screen overlays (`fixed inset-0 z-50`) get own padding
+- NEVER use `env(safe-area-inset-*)` or `max()` — Android WebView doesn't support them
 
-#### Typography System
-- Use a clear type scale: display, heading, body, caption, overline
-- Set line-heights explicitly (`leading-tight`, `leading-snug`, `leading-normal`)
-- Use `truncate` for single-line overflow, `line-clamp-*` for multi-line
-- Font sizes for mobile: minimum 11px for labels, 13px for body, 16px+ for headings
-- Use `tabular-nums` for numbers that change (timers, counters, prices)
+**Layout:**
+- App shell: `h-full flex flex-col` → `shrink-0` + `flex-1 min-h-0` + `shrink-0`
+- Scroll: `overflow-y-auto` with `min-h-0` parent
+- Horizontal scroll: `-mx-4 px-4` pattern with `shrink-0` children
 
-#### Color & Theme Engineering
-- Define a complete color system: primary, secondary, accent, surface, background, text, dim
-- Use opacity variants for layering: `/10`, `/20`, `/40`, `/60`
+**Typography:**
+- Min 11px labels, 13px body, 16px+ headings
+- `truncate` for overflow, `tabular-nums` for changing numbers
+- `leading-tight` for compact text
+
+**Color:**
+- Use design tokens (not hardcoded hex), opacity variants for depth
 - Dark mode first for media/entertainment apps
-- Ensure WCAG AA contrast ratios (4.5:1 for text, 3:1 for large text)
 
-#### Touch & Interaction Design
-- Minimum touch target: 44x44px (use padding, not element size)
-- Add `active:scale-90` or `active:scale-95` for button press feedback
-- Use `-webkit-tap-highlight-color: transparent` to remove blue flash
-- Add `user-select: none` for UI elements, allow on text content
-- Implement pull-to-refresh, swipe gestures where appropriate
+**Animation:**
+- CSS transitions for state changes, `@keyframes` for continuous
+- Only animate `transform` and `opacity` for 60fps
+- Slide-up: `translateY(100%) → translateY(0)` with `ease-out 0.25s`
 
-#### Scroll & Overflow Management
-- Use `overflow-y-auto` for scrollable regions, never `overflow-scroll`
-- Hide scrollbars on mobile: `::-webkit-scrollbar { width: 0; height: 0; }`
-- Use `overscroll-behavior: contain` to prevent scroll chaining
-- Horizontal scrolling: `overflow-x-auto` with `-mx-4 px-4` pattern for edge-to-edge
-- Add `scroll-snap-type: x mandatory` for carousel-like horizontal scrolling
+**Images:**
+- `object-cover` + `bg-surface-2` fallback + `overflow-hidden` on rounded parents
+- Blurred backgrounds: `blur-[60px] opacity-20 scale-150`
 
-#### Layout Patterns
-- Full-height app shell: `h-full flex flex-col` → `shrink-0` (header) + `flex-1 min-h-0` (content) + `shrink-0` (footer)
-- Fixed overlays: `fixed inset-0 z-50` with own safe-area padding
-- Bottom sheets: `fixed bottom-0 left-0 right-0` with `animate-slide-up`
-- Sticky headers: `sticky top-0 z-10 bg-bg/80 backdrop-blur-md`
+### Phase 4: Quality Assurance (agent)
 
-#### Animation & Motion
-- Use CSS transitions for state changes: `transition-colors`, `transition-transform`
-- Use CSS `@keyframes` for continuous animations
-- Slide-up sheets: `transform: translateY(100%)` → `translateY(0)` with `ease-out`
-- Stagger animations: `animation-delay` with increments of 50-100ms
-- Respect `prefers-reduced-motion` for accessibility
-- Loading states: skeleton screens over spinners, pulse animations
+After implementation, launch the QA agent:
 
-#### Image Handling
-- Always use `object-cover` for album art, avatars, thumbnails
-- Add `bg-surface-2` or `bg-surface-3` as placeholder background
-- Use `rounded-full` for avatars, `rounded-xl` or `rounded-2xl` for cards
-- Provide fallback UI when images are missing (icon + muted background)
-- Blurred backgrounds: `blur-[60px] opacity-20 scale-150` on background images
+**Agent: `design-qa`** (foreground — wait for results)
+- Prompt: `"Audit the design in [PROJECT_PATH]. Check files: [list of modified files]. Verify: safe areas, touch targets ≥44px, text readability, scroll management, image fallbacks, animation performance, loading/empty states, consistency with design tokens."`
 
-### Phase 4: Quality Assurance
-
-After implementation, verify:
-
-1. **No content hidden behind system UI** — status bar, navigation bar, keyboard
-2. **All text is readable** — contrast ratios, font sizes, line heights
-3. **All touch targets are tappable** — 44px minimum, no overlapping hitboxes
-4. **Scrollable content scrolls smoothly** — no jank, no layout shifts
-5. **States are handled** — loading, empty, error, active, disabled
-6. **Motion is smooth** — 60fps animations, no layout thrashing
-
-## Research Tools
-
-When deep research is needed, use these tools in this order:
-
-### 1. Context7 Documentation (Primary)
-To fetch current library documentation:
-```
-1. mcp__plugin_context7_context7__resolve-library-id → get library ID
-2. mcp__plugin_context7_context7__query-docs → query specific topic
-```
-
-Use for: Tailwind CSS classes, React patterns, Capacitor APIs, any npm package docs.
-
-### 2. Web Search (Supplementary)
-Use WebSearch for:
-- Current UI/UX trends and best practices
-- Platform-specific design guidelines (Material Design, HIG)
-- CSS property browser support (caniuse data)
-- Specific design pattern inspiration and examples
-- Performance optimization techniques
-
-### 3. Web Fetch (Targeted)
-Use WebFetch for:
-- Reading specific documentation pages found via search
-- Checking CSS property support details
-- Accessing design system documentation
+Fix any failures reported by the QA agent before presenting the result to the user.
 
 ## Additional Resources
 
 ### Reference Files
+- **`references/mobile-patterns.md`** — Safe areas, navigation patterns, cards, scroll, overlays, platform conventions
+- **`references/css-mastery.md`** — Tailwind 4, animations, layout systems, browser compatibility, color systems
 
-For detailed patterns and techniques, consult:
-- **`references/mobile-patterns.md`** — Comprehensive mobile design patterns, safe areas, gestures, platform conventions
-- **`references/css-mastery.md`** — Advanced CSS techniques, animations, layout systems, browser compatibility
-
-### Agent Usage
-
-For complex design tasks, launch specialized research agents:
-- Use `subagent_type: "Explore"` to analyze existing codebase design patterns
-- Use `subagent_type: "general-purpose"` with WebSearch/WebFetch for deep design research
-- Run research agents in parallel for maximum efficiency
+### Agent Files
+- **`agents/design-researcher.md`** — Web research for trends, patterns, inspiration
+- **`agents/docs-fetcher.md`** — Context7 MCP documentation fetching
+- **`agents/codebase-analyzer.md`** — Existing design system analysis
+- **`agents/design-qa.md`** — Post-implementation quality assurance
 
 ## Anti-Patterns — NEVER Do These
 
-- Generic sans-serif font stacks without character
-- Purple gradient on white background (AI slop aesthetic)
-- Tiny touch targets (less than 36px)
-- Content behind status bar or navigation bar
-- `overflow: hidden` on the body (breaks mobile scrolling)
-- Fixed positioning without safe-area awareness
-- Using `vh` units on mobile (changes with keyboard/address bar)
-- Horizontal scrolling on the main content area
-- Missing loading/empty states
-- Ignoring the notch/dynamic island on modern phones
-- Using `max()` or `env()` in Android WebView CSS (not supported)
+- Run research sequentially (always parallel)
+- Skip the research phase for "simple" tasks
+- Use `env()` or `max()` in Android WebView CSS
+- Create touch targets smaller than 36px
+- Use `vh` units on mobile
+- Animate `width`/`height`/`top`/`left` (use `transform`/`opacity`)
+- Hardcode colors instead of using design tokens
+- Add `overflow: hidden` on body
+- Skip loading/empty states
+- Use `hover:` as the only interaction feedback on mobile
